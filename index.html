@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅程規劃系統 V10.0</title>
+    <title>旅程規劃系統 V11.0</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -238,8 +238,8 @@
 
     <!-- LOCK SCREEN -->
     <div id="lockScreen">
-        <h1 class="cinzel" style="font-size:2rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">Destiny Trip</h1>
-        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V10.0</div>
+        <h1 class="cinzel" style="font-size:2rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">開始你的行程了嗎？</h1>
+        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V11.0</div>
         <input type="password" id="passwordInput" class="pass-input" placeholder="輸入旅程代碼" onkeypress="handleEnter(event)">
         <button class="btn-unlock" onclick="attemptLogin()">開啟卷軸</button>
         <div id="loginError" style="color:#ef4444; margin-top:15px; min-height:20px;"></div>
@@ -320,7 +320,7 @@
             <!-- SECTION: INFO -->
             <section id="sec-info" class="hidden">
                 <div class="rpg-card">
-                    <div class="card-title"><i class="fa-solid fa-cloud-sun-rain"></i> 天氣預報</div>
+                    <div class="card-title"><i class="fa-solid fa-cloud-sun-rain"></i> 天氣預報 (<span id="weatherLocName">東京</span>)</div>
                     <div id="weatherDisplay" class="weather-widget"><i class="fa-solid fa-spinner fa-spin"></i> 讀取中...</div>
                 </div>
                 
@@ -373,8 +373,14 @@
             <h3 class="cinzel" style="margin-top:0;"><i class="fa-solid fa-gear"></i> 旅程設定</h3>
             <label style="font-weight:bold; color:#666;">旅程標題</label>
             <input type="text" id="settingTitle">
+            
             <label style="font-weight:bold; color:#666;">開始日期 (計算 Day1 用)</label>
             <input type="date" id="settingStartDate">
+            
+            <label style="font-weight:bold; color:#666;">天氣地點 (城市英文名)</label>
+            <input type="text" id="settingCity" placeholder="例如: Tokyo, Osaka, Taipei">
+            <div style="font-size:0.75rem; color:#888; margin-top:-8px; margin-bottom:10px;">* 儲存時自動搜尋經緯度</div>
+
             <div style="margin-top:20px; display:flex; gap:10px;">
                 <button class="btn btn-danger" style="flex:1;" onclick="closeModal('settingsModal')">取消</button>
                 <button class="btn btn-gold" style="flex:1;" onclick="saveSettings()">儲存設定</button>
@@ -459,7 +465,7 @@
 
     <script>
         // --- DATA DEFAULTS ---
-        const DATA_VERSION = 10.0; 
+        const DATA_VERSION = 11.0; 
         
         const DEFAULT_LINKS = [
             { name: 'Yahoo! JAPAN', url: 'https://www.yahoo.co.jp/' },
@@ -476,13 +482,15 @@
                 { id: 2, date: '2025-12-12', time: '10:00', title: 'Gallery AaMo', desc: '展覽二刷', type: 'activity', link: '' }
             ],
             checklist: [{text:'護照',checked:false}], memos: [], personalInfo: {},
-            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS))
+            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS)),
+            weatherLocation: { name: 'Tokyo', lat: 35.6895, lng: 139.6917 }
         };
 
         const BLANK_TEMPLATE = {
             title: '新旅程', startDate: new Date().toISOString().split('T')[0],
             flightInfo: '', hotelInfo: '', itinerary: [], checklist: [], memos: [], personalInfo: {},
-            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS))
+            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS)),
+            weatherLocation: { name: 'Tokyo', lat: 35.6895, lng: 139.6917 }
         };
 
         // --- STATE ---
@@ -498,13 +506,13 @@
             const key = document.getElementById('passwordInput').value.trim();
             if (!key) return document.getElementById('loginError').innerText = "請輸入代碼";
 
-            const storageKey = 'trip_v9_' + key; // Keeping key compatible with V9 storage
+            const storageKey = 'trip_v9_' + key; 
             const saved = localStorage.getItem(storageKey);
 
             if (saved) {
                 appData = JSON.parse(saved);
-                // Migration to V10 structure if needed
-                if(!appData.usefulLinks) appData.usefulLinks = JSON.parse(JSON.stringify(DEFAULT_LINKS));
+                // Migration V11
+                if(!appData.weatherLocation) appData.weatherLocation = { name: 'Tokyo', lat: 35.6895, lng: 139.6917 };
             } else {
                 if (key === '20251210') appData = JSON.parse(JSON.stringify(PRESET_TOKYO));
                 else if (key === 'demo') appData = JSON.parse(JSON.stringify(PRESET_TOKYO)); 
@@ -554,7 +562,7 @@
             localStorage.setItem('trip_v9_' + currentSessionKey, JSON.stringify(appData));
         }
 
-        // --- PASTE & CLEAR FUNCTIONALITY (Safe) ---
+        // --- PASTE & CLEAR FUNCTIONALITY ---
         async function pasteSafe(elementId) {
             const el = document.getElementById(elementId);
             if(el.value.trim() !== '') {
@@ -595,20 +603,48 @@
             }
         }
 
-        // --- SETTINGS ---
+        // --- SETTINGS & LOCATION ---
         function openSettingsModal() {
             document.getElementById('settingTitle').value = appData.title;
             document.getElementById('settingStartDate').value = appData.startDate;
+            document.getElementById('settingCity').value = appData.weatherLocation ? appData.weatherLocation.name : '';
             document.getElementById('settingsModal').classList.remove('hidden');
         }
-        function saveSettings() {
+        
+        async function saveSettings() {
+            const oldCity = appData.weatherLocation ? appData.weatherLocation.name : '';
+            const newCity = document.getElementById('settingCity').value.trim();
+            
             appData.title = document.getElementById('settingTitle').value;
             appData.startDate = document.getElementById('settingStartDate').value;
+            
+            // Handle Geocoding if city changed
+            if(newCity && newCity !== oldCity) {
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${newCity}&count=1&language=zh&format=json`);
+                    const data = await res.json();
+                    if(data.results && data.results.length > 0) {
+                        appData.weatherLocation = {
+                            name: data.results[0].name,
+                            lat: data.results[0].latitude,
+                            lng: data.results[0].longitude
+                        };
+                        alert(`已更新天氣地點為: ${data.results[0].name}`);
+                    } else {
+                        alert("找不到該城市，請嘗試輸入英文名稱 (例如: Osaka)");
+                    }
+                } catch(e) {
+                    alert("定位失敗，請檢查網路");
+                }
+            }
+
             saveData();
             updateHeaderUI();
             renderItinerary(); 
+            fetchWeather(); // Refresh weather
             closeModal('settingsModal');
         }
+
         function deleteCurrentTrip() {
             if(confirm("警告：確定要永久刪除此行程嗎？")) {
                 if(confirm("此動作無法復原。確定刪除？")) {
@@ -982,10 +1018,15 @@
 
         // --- WEATHER ---
         async function fetchWeather() {
+            const lat = appData.weatherLocation ? appData.weatherLocation.lat : 35.6895;
+            const lng = appData.weatherLocation ? appData.weatherLocation.lng : 139.6917;
+            const locName = appData.weatherLocation ? appData.weatherLocation.name : '東京';
+            document.getElementById('weatherLocName').innerText = locName;
+
             try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=3`);
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`);
                 const data = await res.json();
-                let html = '<div style="margin-bottom:10px;font-weight:bold;border-bottom:1px solid rgba(255,255,255,0.3);padding-bottom:5px;">東京 3 日預報</div>';
+                let html = '';
                 for(let i=0; i<3; i++) {
                     const c = data.daily.weathercode[i];
                     let icon='fa-sun', desc='晴/多雲';
