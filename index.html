@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅程規劃系統 V11.0</title>
+    <title>旅程規劃系統 V12.0</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,6 +135,7 @@
         .btn-map { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #86efac; }
         .btn-danger { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); border-color: #fca5a5; }
         .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+        .btn-logout { background: #475569; color: #fff; border: 1px solid #334155; }
         
         /* Navigation */
         .nav-bar {
@@ -238,14 +239,14 @@
 
     <!-- LOCK SCREEN -->
     <div id="lockScreen">
-        <h1 class="cinzel" style="font-size:2rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">開始你的行程了嗎？</h1>
-        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V11.0</div>
-        <input type="password" id="passwordInput" class="pass-input" placeholder="輸入旅程代碼" onkeypress="handleEnter(event)">
-        <button class="btn-unlock" onclick="attemptLogin()">開啟卷軸</button>
+        <h1 class="cinzel" style="font-size:1.8rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">開始你的行程了嗎？</h1>
+        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V12.0</div>
+        <input type="password" id="passwordInput" class="pass-input" placeholder="輸入/建立代碼 (例:20260101)" onkeypress="handleEnter(event)">
+        <button class="btn-unlock" onclick="attemptLogin()">開啟 / 建立行程</button>
         <div id="loginError" style="color:#ef4444; margin-top:15px; min-height:20px;"></div>
         <div style="margin-top:20px; font-size:0.8rem; color:#888; text-align:center;">
-            Demo: demo (範本) / New: new (空白)<br>
-            東京: 20251210
+            <strong>提示：</strong>輸入範本代碼 <code>demo</code> 可查看功能。<br>
+            輸入任意 8 位數日期 (如 20251231) 可直接建立新行程。
         </div>
     </div>
 
@@ -386,6 +387,8 @@
                 <button class="btn btn-gold" style="flex:1;" onclick="saveSettings()">儲存設定</button>
             </div>
             
+            <button class="btn btn-sm btn-logout" style="width:100%; margin-top:20px;" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> 返回主畫面 (登出)</button>
+
             <hr style="border:0; border-top:1px solid #ccc; margin:20px 0; width:100%;">
             <div style="text-align:center;">
                 <button class="btn btn-danger" style="width:100%; opacity:0.8;" onclick="deleteCurrentTrip()"><i class="fa-solid fa-triangle-exclamation"></i> 刪除此行程</button>
@@ -465,7 +468,7 @@
 
     <script>
         // --- DATA DEFAULTS ---
-        const DATA_VERSION = 11.0; 
+        const DATA_VERSION = 12.0; 
         
         const DEFAULT_LINKS = [
             { name: 'Yahoo! JAPAN', url: 'https://www.yahoo.co.jp/' },
@@ -473,15 +476,18 @@
             { name: '乘換案內', url: 'https://world.jorudan.co.jp/mln/zh-tw/' }
         ];
 
-        const PRESET_TOKYO = {
-            title: '東京快閃 2025', startDate: '2025-12-11',
-            flightInfo: "去程 UO624 12/10 23:55\n回程 UO629 12/14 01:55",
-            hotelInfo: "Dormy Inn Ikebukuro\n東京都豊島區東池袋3-11-11",
+        // DEMO PRESET - No Hardcoded Tokyo Data
+        const PRESET_DEMO = {
+            title: '範本行程 (Demo)', startDate: new Date().toISOString().split('T')[0],
+            flightInfo: "航班資訊範例...\n去程 UO624 10:00\n回程 UO625 18:00",
+            hotelInfo: "住宿資訊範例...\nHotel Demo\n地址: Tokyo",
             itinerary: [
-                { id: 1, date: '2025-12-11', time: '04:45', title: '抵達羽田 T3', desc: '入境 / SIM卡 / 寄行李', type: 'transport', link: '' },
-                { id: 2, date: '2025-12-12', time: '10:00', title: 'Gallery AaMo', desc: '展覽二刷', type: 'activity', link: '' }
+                { id: 1, date: new Date().toISOString().split('T')[0], time: '10:00', title: '抵達 (範例)', desc: '這是一個範本行程，您可以隨意編輯或刪除。', type: 'transport', link: '' },
+                { id: 2, date: new Date().toISOString().split('T')[0], time: '12:00', title: '午餐 (範例)', desc: '嘗試新增圖片或連結！', type: 'food', link: '' }
             ],
-            checklist: [{text:'護照',checked:false}], memos: [], personalInfo: {},
+            checklist: [{text:'護照',checked:false}, {text:'更換日幣',checked:false}], 
+            memos: [{id:1, text:"這是一張便條紙", image:null}], 
+            personalInfo: {},
             usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS)),
             weatherLocation: { name: 'Tokyo', lat: 35.6895, lng: 139.6917 }
         };
@@ -511,17 +517,34 @@
 
             if (saved) {
                 appData = JSON.parse(saved);
-                // Migration V11
+                // Ensure Location Prop exists
                 if(!appData.weatherLocation) appData.weatherLocation = { name: 'Tokyo', lat: 35.6895, lng: 139.6917 };
             } else {
-                if (key === '20251210') appData = JSON.parse(JSON.stringify(PRESET_TOKYO));
-                else if (key === 'demo') appData = JSON.parse(JSON.stringify(PRESET_TOKYO)); 
-                else if (key === 'new') appData = JSON.parse(JSON.stringify(BLANK_TEMPLATE));
-                else return document.getElementById('loginError').innerText = "無效代碼";
+                if (key === 'demo') {
+                    appData = JSON.parse(JSON.stringify(PRESET_DEMO));
+                } else {
+                    // NEW TRIP LOGIC
+                    appData = JSON.parse(JSON.stringify(BLANK_TEMPLATE));
+                    // Initial setup for new trip
+                    appData.title = `旅程 ${key}`;
+                }
             }
             
             currentSessionKey = key;
             initUI();
+        }
+
+        function logout() {
+            currentSessionKey = '';
+            appData = null;
+            document.getElementById('appContainer').classList.remove('fade-in');
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('lockScreen').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('lockScreen').style.opacity = '1';
+            }, 50);
+            document.getElementById('passwordInput').value = '';
+            closeModal('settingsModal');
         }
 
         function initUI() {
@@ -559,6 +582,8 @@
 
         function saveData() {
             if(!currentSessionKey) return;
+            // Demo changes are not persistent across reloads usually, but here we allow it for session
+            // If user typed 'demo', we save to trip_v9_demo
             localStorage.setItem('trip_v9_' + currentSessionKey, JSON.stringify(appData));
         }
 
@@ -650,7 +675,7 @@
                 if(confirm("此動作無法復原。確定刪除？")) {
                     localStorage.removeItem('trip_v9_' + currentSessionKey);
                     alert("行程已刪除。");
-                    location.reload();
+                    logout();
                 }
             }
         }
