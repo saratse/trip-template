@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅程規劃系統</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Theme Variables - Default Suikoden Style */
+            --bg-dark: #0f172a;
+            --primary: #1e3a8a;
+            --accent: #d4af37;
+            --accent-light: #fcd34d;
+            --paper: #f5f5dc;
+            --text-main: #2c2c2c;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Noto Serif TC', serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .text-gold { color: var(--accent); }
+        .cinzel { font-family: 'Cinzel', serif; }
+
+        /* --- LOCK SCREEN --- */
+        #lockScreen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #000000 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            padding: 20px;
+            transition: opacity 0.5s ease;
+        }
+        .lock-content {
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+        }
+        .lock-title {
+            font-size: 2rem; margin-bottom: 30px;
+            text-shadow: 0 0 10px var(--accent);
+        }
+        .pass-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+            border: 2px solid var(--accent);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-family: 'Cinzel', serif;
+            letter-spacing: 2px;
+        }
+        .btn-unlock {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+        .error-msg {
+            color: #ef4444; margin-top: 15px; min-height: 20px; font-size: 0.9rem;
+        }
+
+        /* --- APP CONTAINER --- */
+        #appContainer {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #appContainer.fade-in {
+            opacity: 1;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 58, 138, 0.8) 100%);
+            color: var(--accent);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; text-shadow: 2px 2px 4px black; }
+
+        /* Container */
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+
+        /* Cards */
+        .rpg-card {
+            background: var(--paper);
+            border: 2px solid #8b7355;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+        .rpg-card::before, .rpg-card::after {
+            content: ''; position: absolute; width: 10px; height: 10px;
+            border: 2px solid var(--accent); transition: all 0.3s ease;
+        }
+        .rpg-card::before { top: 4px; left: 4px; border-right: none; border-bottom: none; }
+        .rpg-card::after { bottom: 4px; right: 4px; border-left: none; border-top: none; }
+
+        .card-title {
+            font-family: 'Cinzel', serif; font-weight: 700; color: #4a3b2a;
+            border-bottom: 1px solid #8b7355; padding-bottom: 5px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Info Rows */
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .label { font-weight: bold; color: #666; }
+        .value { text-align: right; font-weight: 600; color: #222; }
+
+        /* Buttons & Inputs */
+        .btn {
+            background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+            border: 1px solid #93c5fd; color: white; padding: 8px 16px;
+            border-radius: 4px; font-family: 'Noto Serif TC', serif; font-weight: bold;
+            cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem;
+            text-align: center;
+        }
+        .btn-gold { background: linear-gradient(180deg, #fcd34d 0%, #d97706 100%); border: 1px solid #fde68a; color: #451a03; }
+        .btn-map { background: linear-gradient(180deg, #22c55e 0%, #15803d 100%); border-color: #86efac; }
+        .btn-food { background: linear-gradient(180deg, #f97316 0%, #c2410c 100%); border-color: #fdba74; }
+        .btn-danger { background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%); border-color: #fca5a5; }
+        
+        input[type="text"], textarea, select {
+            width: 100%; padding: 10px; margin-bottom: 10px;
+            border: 1px solid #8b7355; background: #fffef0;
+            border-radius: 4px; font-family: 'Noto Serif TC', serif;
+        }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(0deg, #0f172a 0%, #1e293b 100%);
+            display: flex; justify-content: space-around; padding: 10px 0;
+            border-top: 2px solid var(--accent);
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.5); z-index: 1000;
+        }
+        .nav-item {
+            color: #64748b; text-align: center; font-size: 0.75rem;
+            background: none; border: none; cursor: pointer; flex: 1;
+        }
+        .nav-item.active { color: var(--accent); text-shadow: 0 0 5px rgba(212, 175, 55, 0.5); }
+        .nav-item i { display: block; font-size: 1.2rem; margin-bottom: 4px; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 20px; border-left: 3px solid var(--accent); margin-left: 10px; }
+        .timeline-item { margin-bottom: 25px; position: relative; }
+        .timeline-dot {
+            position: absolute; left: -33px; top: 0; width: 26px; height: 26px;
+            background: var(--accent); border-radius: 50%; border: 2px solid #fff;
+            box-shadow: 0 0 5px var(--accent); display: flex; justify-content: center;
+            align-items: center; font-size: 14px; color: #451a03;
+        }
+        .timeline-time {
+            font-family: 'Cinzel', serif; font-weight: bold; color: var(--accent-light);
+            font-size: 1.1rem; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.7); border-radius: 6px; padding: 10px;
+            border: 1px solid #d1d5db;
+        }
+        .timeline-actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .timeline-img-preview { margin-top: 10px; width: 100%; height: 120px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+
+        /* Memos */
+        .memo-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .memo-card {
+            background: #fffef0; border: 1px solid #d4af37; padding: 15px;
+            border-radius: 2px; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); position: relative;
+        }
+        .memo-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 20px;
+            background: rgba(212, 175, 55, 0.2); border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .memo-text { margin-top: 15px; white-space: pre-wrap; font-size: 1rem; line-height: 1.5; word-break: break-all; }
+        .memo-img { width: 100%; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+        .memo-actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; }
+
+        /* Weather */
+        .weather-widget {
+            background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+            color: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        }
+        .weather-day-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        .weather-day-row:last-child { border-bottom: none; }
+        .temp-high { color: #fee2e2; font-weight: bold; }
+        .temp-low { color: #e0f2fe; opacity: 0.9; }
+
+        /* Lightbox & Spotlight */
+        .lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: flex; justify-content: center;
+            align-items: center; z-index: 3000; cursor: zoom-out; padding: 20px;
+        }
+        .lightbox img { max-width: 95%; max-height: 95%; object-fit: contain; border: 2px solid var(--accent); }
+        
+        .spotlight-card {
+            background: var(--paper); border: 4px solid var(--accent); border-radius: 8px;
+            padding: 30px; width: 100%; max-width: 100%; max-height: 90vh; overflow-y: auto;
+            text-align: center; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4); cursor: default;
+        }
+        .spotlight-text { font-size: 1.8rem; font-weight: bold; color: #000; line-height: 1.4; word-break: break-all; margin-bottom: 20px; }
+        .spotlight-img { max-width: 100%; max-height: 50vh; border: 2px solid #8b7355; margin-top: 10px; }
+
+        /* FAB & Modals */
+        .fab {
+            position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
+            background: var(--accent); border-radius: 50%; display: flex; justify-content: center;
+            align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); color: #451a03;
+            font-size: 24px; border: 2px solid #fff; cursor: pointer; z-index: 900;
+        }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: flex; justify-content: center;
+            align-items: center; z-index: 2000;
+        }
+        .modal-content {
+            background: var(--paper); padding: 20px; border-radius: 8px; width: 90%; max-width: 500px;
+            border: 2px solid var(--accent); max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column;
+        }
+        .upload-area {
+            border: 2px dashed #8b7355; background: rgba(255,255,255,0.4);
+            padding: 15px; text-align: center; border-radius: 6px; margin-bottom: 10px; cursor: pointer;
+        }
+        
+        /* Personal Info */
+        .input-group { display: flex; gap: 5px; margin-bottom: 12px; align-items: flex-end; }
+        .input-wrapper { flex: 1; }
+        .input-wrapper label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 2px; font-weight: bold; }
+        .input-group input { margin-bottom: 0; width: 100%; }
+        .btn-copy {
+            background: linear-gradient(180deg, #475569 0%, #334155 100%); border: 1px solid #64748b;
+            color: #fff; width: 44px; height: 43px; border-radius: 4px; display: flex;
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+        
+        /* Checklist */
+        .checklist-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px dashed #ccc; cursor: pointer; }
+        .checklist-item.checked span { text-decoration: line-through; color: #999; }
+        .checklist-item input[type="checkbox"] { margin-right: 12px; transform: scale(1.3); accent-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <!-- LOCK SCREEN -->
+    <div id="lockScreen">
+        <div class="lock-content">
+            <h1 class="cinzel lock-title"><i class="fa-solid fa-compass"></i> Destiny Trip</h1>
+            <input type="password" id="passwordInput" class="pass-input" placeholder="輸入行程代碼" onkeypress="handleEnter(event)">
+            <button class="btn-unlock" onclick="attemptLogin()">開啟卷軸</button>
+            <div id="loginError" class="error-msg"></div>
+            <div style="margin-top:20px; font-size:0.8rem; color:#888;">
+                <i class="fa-solid fa-circle-info"></i> 
+                代碼: 20251210 (東京)<br>
+                Demo: demo (範本) / New: new (空白)
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appContainer" class="hidden">
+        <header>
+            <h1 class="cinzel"><i class="fa-solid fa-dragon"></i> <span id="headerTitle">旅程</span></h1>
+            <div id="headerDate" style="font-size: 0.8rem; color: #aaa;"></div>
+        </header>
+
+        <div class="container">
+            <!-- SECTION: FLIGHT & HOTEL -->
+            <section id="sec-booking">
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-plane-departure"></i> 航班資訊</div>
+                    <textarea id="flightInfo" rows="4" style="width:100%; border:none; background:transparent; resize:none;" readonly onclick="enableEdit(this)" onblur="saveSectionText('flightInfo', this.value)"></textarea>
+                </div>
+
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-bed"></i> 住宿據點</div>
+                    <textarea id="hotelInfo" rows="6" style="width:100%; border:none; background:transparent; resize:none;" readonly onclick="enableEdit(this)" onblur="saveSectionText('hotelInfo', this.value)"></textarea>
+                    <div style="margin-top: 10px; text-align: right;">
+                        <a id="hotelMapLink" href="#" target="_blank" class="btn btn-map btn-sm"><i class="fa-solid fa-map-location-dot"></i> 導航</a>
+                    </div>
+                </div>
+
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-address-card"></i> 個人資訊 (本機儲存)</div>
+                    <div id="personalInfoContainer"></div>
+                    <div style="text-align:right; font-size:0.75rem; color:#888; margin-top:5px;">* 點擊右側按鈕即可複製</div>
+                </div>
+            </section>
+
+            <!-- SECTION: ITINERARY -->
+            <section id="sec-itinerary" class="hidden">
+                <div class="date-tabs" id="dayTabs"></div>
+                <div id="itineraryContent"></div>
+                <div style="height: 60px;"></div>
+            </section>
+
+            <!-- SECTION: CHECKLIST & MEMO -->
+            <section id="sec-memo" class="hidden">
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-clipboard-check"></i> 行前準備</div>
+                    <div id="checklistContainer"></div>
+                    <div style="margin-top: 10px; display: flex; gap: 5px;">
+                        <input type="text" id="newCheckItem" placeholder="新增清單項目..." style="margin-bottom: 0;">
+                        <button class="btn btn-gold" onclick="addCheckItem()">+</button>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="card-title" style="color:white; border-bottom-color: var(--accent);"><i class="fa-solid fa-note-sticky"></i> 旅人筆記 & 便條</div>
+                    <p style="color:#aaa; font-size:0.8rem; margin-top:-5px;">點擊「放大」進入聚光燈模式</p>
+                    <div id="memoContainer" class="memo-grid"></div>
+                </div>
+            </section>
+
+            <!-- SECTION: INFO -->
+            <section id="sec-info" class="hidden">
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-cloud-sun-rain"></i> 天氣預報</div>
+                    <div id="weatherDisplay" class="weather-widget"><i class="fa-solid fa-spinner fa-spin"></i> 讀取中...</div>
+                    <div style="text-align: center;">
+                        <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" class="btn btn-sm" style="background: #222;">日本氣象廳</a>
+                    </div>
+                </div>
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-kit-medical"></i> 緊急聯絡</div>
+                    <div class="info-row"><span class="label">警察 (Police)</span><a href="tel:110" class="btn btn-danger btn-sm">110</a></div>
+                    <div class="info-row"><span class="label">救護/火警</span><a href="tel:119" class="btn btn-danger btn-sm">119</a></div>
+                    <div class="info-row"><span class="label">外交部急難救助</span><a href="tel:+81-3-3280-7811" class="btn btn-sm">辦事處電話</a></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- FAB -->
+        <div id="fabAdd" class="fab hidden" onclick="handleFabClick()"><i class="fa-solid fa-plus"></i></div>
+
+        <!-- Navigation -->
+        <nav class="nav-bar">
+            <button class="nav-item active" onclick="switchTab('sec-booking', this)"><i class="fa-solid fa-ticket"></i> 預訂</button>
+            <button class="nav-item" onclick="switchTab('sec-itinerary', this)"><i class="fa-solid fa-scroll"></i> 行程</button>
+            <button class="nav-item" onclick="switchTab('sec-memo', this)"><i class="fa-solid fa-list-check"></i> 清單</button>
+            <button class="nav-item" onclick="switchTab('sec-info', this)"><i class="fa-solid fa-circle-info"></i> 資訊</button>
+        </nav>
+    </div>
+
+    <!-- Modals & Lightbox (Same structure as V6) -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="cinzel" style="margin-top:0; margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:10px;"><i class="fa-solid fa-pen-nib"></i> 編輯行程</h3>
+            <input type="hidden" id="editId">
+            <label style="font-weight:bold; color:#666;">時間 (24制)</label>
+            <input type="text" id="editTime" placeholder="1430 或 14:30" inputmode="numeric" onblur="formatTimeInput(this)">
+            <label style="font-weight:bold; color:#666;">標題</label>
+            <input type="text" id="editTitle">
+            <label style="font-weight:bold; color:#666;">備註</label>
+            <textarea id="editDesc" rows="6"></textarea>
+            <label style="font-weight:bold; color:#666;">圖片</label>
+            <div class="upload-area" onclick="document.getElementById('editImageInput').click()" id="uploadDropZone"><i class="fa-solid fa-image"></i><p>上傳或貼上</p><input type="file" id="editImageInput" accept="image/*" onchange="handleImageUpload(this, 'itinerary')" style="display:none;"></div>
+            <div id="editImagePreviewContainer" style="display:none; text-align:center; margin-bottom:10px;"><img id="editImagePreview" src="" style="max-height:100px;"><br><button class="btn btn-danger btn-sm" onclick="clearEditImage('itinerary')">刪除</button></div>
+            <label style="font-weight:bold; color:#666;">類型</label>
+            <select id="editType"><option value="activity">活動</option><option value="food">用餐</option><option value="shopping">購物</option><option value="transport">交通</option></select>
+            <label style="font-weight:bold; color:#666;">連結</label>
+            <input type="text" id="editLink">
+            <div style="display:flex; gap:10px; margin-top:15px;"><button class="btn btn-danger" style="flex:1;" onclick="closeModal('editModal')">取消</button><button class="btn btn-gold" style="flex:1;" onclick="saveItineraryItem()">儲存</button></div>
+            <button id="btnDeleteItinerary" class="btn btn-danger" style="width:100%; margin-top:10px;" onclick="deleteItem()">刪除</button>
+        </div>
+    </div>
+
+    <div id="memoModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 class="cinzel" style="margin-top:0; margin-bottom:15px; border-bottom:2px solid var(--accent); padding-bottom:10px;"><i class="fa-solid fa-note-sticky"></i> 編輯便條</h3>
+            <input type="hidden" id="memoId">
+            <textarea id="memoText" rows="5" placeholder="輸入內容..."></textarea>
+            <div class="upload-area" onclick="document.getElementById('memoImageInput').click()" id="memoDropZone"><i class="fa-solid fa-camera"></i><p>上傳或貼上</p><input type="file" id="memoImageInput" accept="image/*" onchange="handleImageUpload(this, 'memo')" style="display:none;"></div>
+            <div id="memoImagePreviewContainer" style="display:none; text-align:center; margin-bottom:10px;"><img id="memoImagePreview" src="" style="max-height:100px;"><br><button class="btn btn-danger btn-sm" onclick="clearEditImage('memo')">刪除</button></div>
+            <div style="display:flex; gap:10px; margin-top:15px;"><button class="btn btn-danger" style="flex:1;" onclick="closeModal('memoModal')">取消</button><button class="btn btn-gold" style="flex:1;" onclick="saveMemo()">儲存</button></div>
+        </div>
+    </div>
+
+    <div id="lightbox" class="lightbox hidden" onclick="closeLightbox()"><img id="lightboxImg" src=""></div>
+    <div id="memoSpotlight" class="lightbox hidden" onclick="closeMemoSpotlight()">
+        <div class="spotlight-card" onclick="event.stopPropagation()">
+            <div id="memoSpotlightText" class="spotlight-text"></div>
+            <img id="memoSpotlightImg" class="spotlight-img hidden">
+            <div style="margin-top:30px;"><button class="btn btn-danger" onclick="closeMemoSpotlight()">關閉</button></div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATABASE: TRIP PRESETS ---
+        // 定義不同的預設行程，Key 是密碼
+        const TRIP_PRESETS = {
+            '20251210': {
+                title: '東京快閃 2025',
+                dateStr: '12/10 - 12/14',
+                flightInfo: "去程: UO624 12/10 23:55 HND T3 (12/11 04:45)\n回程: UO629 12/14 01:55 HND T3 (06:15 HKG)",
+                hotelInfo: "Dormy Inn Ikebukuro\n地址: 東京都豊島区東池袋3-11-11\n電話: +81-3-5956-548\n訂單: 請參閱電郵",
+                itinerary: [
+                    { id: 1, day: 'D1', date: '12/11', time: '04:45', title: '抵達羽田 T3', desc: '入境清關(預計05:30完成) → 領 SIM 卡(JAL ABC) → Refresh Room 梳洗 → 寄行李', type: 'transport', link: '' },
+                    { id: 2, day: 'D1', date: '12/11', time: '08:30', title: '利木津巴士 → 池袋', desc: '巴士站 2 號乘車處。\n前往 Dormy Inn 寄放行李 (10:00 抵達)', type: 'transport', link: '' },
+                    { id: 3, day: 'D1', date: '12/11', time: '10:30', title: '東京車站購物', desc: '1. 皇居長夾\n2. BUTTER 甜點', type: 'shopping', link: '' },
+                    { id: 4, day: 'D1', date: '12/11', time: '12:30', title: '午餐', desc: '東京車站周邊快速解決', type: 'food', link: '' },
+                    { id: 5, day: 'D1', date: '12/11', time: '14:30', title: 'Chiikawa Park', desc: 'Sunshine City Annex 1F', type: 'shopping', link: '' },
+                    { id: 6, day: 'D1', date: '12/11', time: '16:00', title: 'Check-in', desc: '辦理入住與休息', type: 'activity', link: '' },
+                    { id: 7, day: 'D1', date: '12/11', time: '17:00', title: 'Gallery AaMo', desc: '東京巨蛋城展覽 (一刷)', type: 'activity', link: '' },
+                    { id: 21, day: 'D2', date: '12/12', time: '09:00', title: '早餐', desc: '飯店早餐', type: 'food', link: '' },
+                    { id: 22, day: 'D2', date: '12/12', time: '10:00', title: 'Gallery AaMo', desc: '展覽二刷', type: 'activity', link: '' },
+                    { id: 34, day: 'D3', date: '12/13', time: '18:45', title: '前往機場', desc: '回飯店拿行李，19:00 出發', type: 'transport', link: '' },
+                    { id: 41, day: 'D4', date: '12/14', time: '01:55', title: '起飛', desc: 'UO629 回香港', type: 'transport', link: '' }
+                ],
+                checklist: [{text:'護照',checked:false}, {text:'SIM卡憑證',checked:false}, {text:'日幣',checked:false}],
+                memos: [{id:101, text:"7-11 發券番號: 2269602155961", image:null}, {id:102, text:"ISEKI 地址: 東池袋1-15-1 真下ビル B1F", image:null}],
+                personalInfo: { nameCh:'', nameEn:'', passport:'', dob:'', email:'', passportExpiry:'' }
+            },
+            'demo': {
+                title: '範本行程',
+                dateStr: '2025/01/01 - 01/05',
+                flightInfo: "輸入航班資訊...",
+                hotelInfo: "輸入飯店資訊...",
+                itinerary: [
+                    { id: 1, day: 'Day1', date: '01/01', time: '10:00', title: '抵達', desc: '範本行程開始', type: 'transport', link: '' }
+                ],
+                checklist: [{text:'範本項目',checked:false}],
+                memos: [],
+                personalInfo: {}
+            }
+        };
+
+        const BLANK_TEMPLATE = {
+            title: '新旅程', dateStr: '', flightInfo: '', hotelInfo: '',
+            itinerary: [], checklist: [], memos: [], personalInfo: {}
+        };
+
+        // --- GLOBAL STATE ---
+        let appData = null;
+        let currentSessionKey = ''; // The password used for this session
+        let currentDayTab = ''; 
+        let currentEditingImage = null;
+        let activeTabId = 'sec-booking';
+
+        // --- LOGIN LOGIC ---
+        function handleEnter(e) {
+            if(e.key === 'Enter') attemptLogin();
+        }
+
+        function attemptLogin() {
+            const input = document.getElementById('passwordInput');
+            const key = input.value.trim();
+            const errorMsg = document.getElementById('loginError');
+
+            if (!key) {
+                errorMsg.innerText = "請輸入代碼";
+                return;
+            }
+
+            // 1. Try to load from LocalStorage (Existing Data)
+            const storageKey = 'trip_' + key;
+            const savedData = localStorage.getItem(storageKey);
+
+            if (savedData) {
+                try {
+                    appData = JSON.parse(savedData);
+                    console.log("Loaded existing data for key:", key);
+                } catch(e) {
+                    console.error("Data corrupted, loading preset");
+                }
+            }
+
+            // 2. If no saved data, load Preset or Blank
+            if (!appData) {
+                if (TRIP_PRESETS[key]) {
+                    appData = JSON.parse(JSON.stringify(TRIP_PRESETS[key])); // Deep copy
+                } else if (key === 'new') {
+                    appData = JSON.parse(JSON.stringify(BLANK_TEMPLATE));
+                } else {
+                    errorMsg.innerText = "無效的代碼，試試 'demo' 或 '20251210'";
+                    return;
+                }
+            }
+
+            // Login Success
+            currentSessionKey = key;
+            
+            // Set Header Info
+            document.getElementById('headerTitle').innerText = appData.title || '旅程';
+            document.getElementById('headerDate').innerText = appData.dateStr || '';
+            document.getElementById('flightInfo').value = appData.flightInfo || '';
+            document.getElementById('hotelInfo').value = appData.hotelInfo || '';
+            
+            // Set Map Link
+            if(appData.hotelInfo && appData.hotelInfo.includes('Dormy Inn')) {
+                document.getElementById('hotelMapLink').href = "https://www.google.com/maps/search/?api=1&query=Dormy+Inn+Ikebukuro";
+            } else {
+                document.getElementById('hotelMapLink').href = "https://www.google.com/maps";
+            }
+
+            // Initialize UI
+            currentDayTab = appData.itinerary.length > 0 ? appData.itinerary[0].day : 'Day1';
+            
+            renderPersonalInfo();
+            renderChecklist();
+            renderMemos();
+            fetchWeather(); // Weather is generic Tokyo for now
+            renderItinerary();
+
+            // Transition Animation
+            document.getElementById('lockScreen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('lockScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                setTimeout(() => document.getElementById('appContainer').classList.add('fade-in'), 50);
+            }, 500);
+        }
+
+        // --- STORAGE ---
+        function saveData() {
+            if(!currentSessionKey || !appData) return;
+            const key = 'trip_' + currentSessionKey;
+            try {
+                localStorage.setItem(key, JSON.stringify(appData));
+            } catch (e) {
+                alert("儲存空間不足，建議刪除部分圖片");
+            }
+        }
+
+        // --- EDITING TEXTAREAS (Booking Page) ---
+        function enableEdit(el) {
+            el.removeAttribute('readonly');
+            el.style.background = '#fff';
+            el.style.border = '1px solid #d4af37';
+        }
+        function saveSectionText(field, val) {
+            appData[field] = val;
+            saveData();
+            // Reset style
+            const el = document.getElementById(field);
+            el.setAttribute('readonly', true);
+            el.style.background = 'transparent';
+            el.style.border = 'none';
+        }
+
+        // --- PERSONAL INFO ---
+        const INFO_FIELDS = [
+            { key: 'nameCh', label: '中文姓名' }, { key: 'nameEn', label: '英文姓名' },
+            { key: 'passport', label: '護照號碼' }, { key: 'dob', label: '出生日期' },
+            { key: 'email', label: 'Email' }, { key: 'passportExpiry', label: '護照效期' }
+        ];
+        function renderPersonalInfo() {
+            const c = document.getElementById('personalInfoContainer'); c.innerHTML = '';
+            if(!appData.personalInfo) appData.personalInfo = {};
+            INFO_FIELDS.forEach(f => {
+                const val = appData.personalInfo[f.key] || '';
+                c.innerHTML += `<div class="input-group"><div class="input-wrapper"><label>${f.label}</label><input type="text" id="pi-${f.key}" value="${val}" oninput="updatePI('${f.key}',this.value)"></div><button class="btn-copy" onclick="copyText('pi-${f.key}')"><i class="fa-regular fa-copy"></i></button></div>`;
+            });
+        }
+        function updatePI(k, v) { appData.personalInfo[k] = v; saveData(); }
+        function copyText(id) {
+            const el = document.getElementById(id); el.select(); el.setSelectionRange(0,99999);
+            try { navigator.clipboard.writeText(el.value); } catch(e) { document.execCommand('copy'); }
+            const oldBg = el.style.backgroundColor; el.style.backgroundColor='#dcfce7'; setTimeout(()=>el.style.backgroundColor=oldBg,300);
+        }
+
+        // --- ITINERARY ---
+        function getUniqueDays() { return [...new Set(appData.itinerary.map(i=>i.day))].sort(); }
+        function renderDayTabs() {
+            const c = document.getElementById('dayTabs'); c.innerHTML = '';
+            const days = getUniqueDays();
+            if(days.length === 0) {
+                // If empty, create a default day
+                const btn = document.createElement('button');
+                btn.className = 'date-tab active'; btn.innerText = 'Day1';
+                c.appendChild(btn);
+                return;
+            }
+            if(!days.includes(currentDayTab)) currentDayTab = days[0];
+            days.forEach(d => {
+                const btn = document.createElement('button');
+                btn.className = `date-tab ${d===currentDayTab?'active':''}`;
+                // Get date string
+                const item = appData.itinerary.find(i=>i.day===d);
+                btn.innerHTML = `${d} <small>${item?item.date:''}</small>`;
+                btn.onclick = () => { currentDayTab = d; renderDayTabs(); renderItinerary(); };
+                c.appendChild(btn);
+            });
+        }
+        function renderItinerary() {
+            renderDayTabs();
+            const c = document.getElementById('itineraryContent'); c.innerHTML = '';
+            const items = appData.itinerary.filter(i => i.day === currentDayTab).sort((a,b) => a.time.localeCompare(b.time));
+            
+            if(items.length === 0) { c.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">無行程，請新增</div>'; return; }
+            
+            const list = document.createElement('div'); list.className = 'timeline';
+            items.forEach(item => {
+                let icon='fa-circle';
+                if(item.type==='food') icon='fa-utensils';
+                if(item.type==='transport') icon='fa-train-subway';
+                if(item.type==='shopping') icon='fa-bag-shopping';
+                
+                let linkHtml = item.link ? `<a href="${item.link}" target="_blank" class="btn btn-gold btn-sm"><i class="fa-solid fa-link"></i> 連結</a>` : '';
+                let imgHtml = item.image ? `<img src="${item.image}" class="timeline-img-preview" onclick="openLightbox('${item.image}')">` : '';
+                
+                list.innerHTML += `
+                <div class="timeline-item">
+                    <div class="timeline-dot"><i class="fa-solid ${icon}"></i></div>
+                    <div class="timeline-time">${item.time}</div>
+                    <div class="timeline-content">
+                        <div style="font-weight:bold; font-size:1.1rem;">${item.title}</div>
+                        <div style="font-size:0.9rem; color:#555; margin-top:4px; line-height:1.4;">${item.desc.replace(/\n/g,'<br>')}</div>
+                        ${imgHtml}
+                        <div class="timeline-actions">
+                            ${linkHtml}
+                            <button class="btn btn-sm" style="background:#555;" onclick="openEditModal(${item.id})"><i class="fa-solid fa-pen"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            c.appendChild(list);
+        }
+
+        // --- EDIT ITINERARY ---
+        let editId = null;
+        function openEditModal(id=null) {
+            editId = id;
+            const delBtn = document.getElementById('btnDeleteItinerary');
+            clearEditImage('itinerary');
+            
+            if(id) {
+                delBtn.classList.remove('hidden');
+                const item = appData.itinerary.find(i=>i.id===id);
+                document.getElementById('editTime').value = item.time;
+                document.getElementById('editTitle').value = item.title;
+                document.getElementById('editDesc').value = item.desc;
+                document.getElementById('editType').value = item.type;
+                document.getElementById('editLink').value = item.link || '';
+                if(item.image) {
+                    currentEditingImage = item.image;
+                    document.getElementById('editImagePreview').src = item.image;
+                    document.getElementById('editImagePreviewContainer').style.display = 'block';
+                }
+            } else {
+                delBtn.classList.add('hidden');
+                document.getElementById('editTime').value = '10:00';
+                document.getElementById('editTitle').value = '';
+                document.getElementById('editDesc').value = '';
+                document.getElementById('editType').value = 'activity';
+                document.getElementById('editLink').value = '';
+            }
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        function saveItineraryItem() {
+            const timeRaw = document.getElementById('editTime').value;
+            let time = timeRaw.length===4 && !timeRaw.includes(':') ? timeRaw.substring(0,2)+':'+timeRaw.substring(2) : timeRaw;
+            const title = document.getElementById('editTitle').value;
+            if(!title) return alert('請輸入標題');
+            
+            const newItem = {
+                id: editId || Date.now(),
+                day: currentDayTab, // Assign to current tab
+                date: appData.itinerary.find(i=>i.day===currentDayTab)?.date || '', // Try to inherit date
+                time: time,
+                title: title,
+                desc: document.getElementById('editDesc').value,
+                type: document.getElementById('editType').value,
+                link: document.getElementById('editLink').value,
+                image: currentEditingImage
+            };
+
+            if(editId) {
+                const idx = appData.itinerary.findIndex(i=>i.id===editId);
+                if(idx!==-1) appData.itinerary[idx] = newItem;
+            } else {
+                appData.itinerary.push(newItem);
+            }
+            
+            closeModal('editModal'); renderItinerary(); setTimeout(saveData, 50);
+        }
+        function deleteItem() {
+            if(confirm('刪除?')) {
+                appData.itinerary = appData.itinerary.filter(i=>i.id!==editId);
+                closeModal('editModal'); renderItinerary(); setTimeout(saveData, 50);
+            }
+        }
+
+        // --- MEMO & CHECKLIST ---
+        function renderMemos() {
+            const c = document.getElementById('memoContainer'); c.innerHTML = '';
+            if(!appData.memos || appData.memos.length===0) { c.innerHTML='<div style="color:#aaa;text-align:center;">無便條</div>'; return; }
+            appData.memos.forEach(m => {
+                let img = m.image ? `<img src="${m.image}" class="memo-img" onclick="openMemoSpotlight(${m.id})">` : '';
+                c.innerHTML += `
+                <div class="memo-card">
+                    <div class="memo-text">${linkify(m.text)}</div>${img}
+                    <div class="memo-actions">
+                        <button class="btn btn-sm" style="background:#555;" onclick="editMemo(${m.id})"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-sm" style="background:#222;" onclick="openMemoSpotlight(${m.id})"><i class="fa-solid fa-expand"></i></button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteMemo(${m.id})"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+        }
+        function openMemoModal(id=null) {
+            document.getElementById('memoId').value = id || '';
+            document.getElementById('memoText').value = '';
+            clearEditImage('memo');
+            if(id) {
+                const m = appData.memos.find(x=>x.id===id);
+                document.getElementById('memoText').value = m.text;
+                if(m.image) {
+                    currentEditingImage = m.image;
+                    document.getElementById('memoImagePreview').src = m.image;
+                    document.getElementById('memoImagePreviewContainer').style.display = 'block';
+                }
+            }
+            document.getElementById('memoModal').classList.remove('hidden');
+        }
+        function editMemo(id) { openMemoModal(id); }
+        function saveMemo() {
+            const txt = document.getElementById('memoText').value;
+            const idVal = document.getElementById('memoId').value;
+            const id = idVal ? parseInt(idVal) : Date.now();
+            if(!txt && !currentEditingImage) return alert('內容空白');
+            
+            const newMemo = { id: id, text: txt, image: currentEditingImage };
+            if(!appData.memos) appData.memos = [];
+            
+            if(idVal) {
+                const idx = appData.memos.findIndex(m=>m.id===id);
+                if(idx!==-1) appData.memos[idx] = newMemo;
+            } else {
+                appData.memos.unshift(newMemo);
+            }
+            closeModal('memoModal'); renderMemos(); setTimeout(saveData, 50);
+        }
+        function deleteMemo(id) { if(confirm('刪除?')) { appData.memos=appData.memos.filter(m=>m.id!==id); renderMemos(); setTimeout(saveData,50); } }
+        
+        function renderChecklist() {
+            const c = document.getElementById('checklistContainer'); c.innerHTML = '';
+            appData.checklist.forEach((item, idx) => {
+                c.innerHTML += `<div class="checklist-item ${item.checked?'checked':''}" onclick="toggleCheck(${idx})">
+                    <input type="checkbox" ${item.checked?'checked':''}><span>${item.text}</span>
+                    <button style="margin-left:auto;background:none;border:none;color:#666;" onclick="deleteCheck(${idx},event)">x</button>
+                </div>`;
+            });
+        }
+        function toggleCheck(i) { appData.checklist[i].checked = !appData.checklist[i].checked; renderChecklist(); setTimeout(saveData,50); }
+        function addCheckItem() { const inp=document.getElementById('newCheckItem'); if(inp.value){ appData.checklist.push({text:inp.value,checked:false}); inp.value=''; renderChecklist(); setTimeout(saveData,50); }}
+        function deleteCheck(i,e) { e.stopPropagation(); if(confirm('刪除?')){ appData.checklist.splice(i,1); renderChecklist(); setTimeout(saveData,50); } }
+
+        // --- HELPERS ---
+        function switchTab(id, el) {
+            activeTabId = id;
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            if(el) el.classList.add('active');
+            
+            const fab = document.getElementById('fabAdd');
+            if(id === 'sec-itinerary' || id === 'sec-memo') {
+                fab.classList.remove('hidden');
+                if(id === 'sec-itinerary') renderItinerary();
+                if(id === 'sec-memo') renderMemos();
+            } else {
+                fab.classList.add('hidden');
+            }
+        }
+        function handleFabClick() {
+            if(activeTabId==='sec-itinerary') openEditModal();
+            if(activeTabId==='sec-memo') openMemoModal();
+        }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function linkify(txt) { return txt.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:var(--primary);text-decoration:underline;">連結</a>'); }
+        
+        function formatTimeInput(input) {
+            let val = input.value.trim().replace(/[^0-9:]/g, '');
+            if (val.length === 4 && !val.includes(':')) input.value = val.substring(0, 2) + ':' + val.substring(2);
+        }
+
+        // --- IMAGE HANDLING ---
+        function handleImageUpload(input, type) {
+            const file = input.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image(); img.src = e.target.result;
+                img.onload = function() {
+                    const cvs = document.createElement('canvas'); const ctx = cvs.getContext('2d');
+                    const MAX=800; let w=img.width, h=img.height;
+                    if(w>h){ if(w>MAX){ h*=MAX/w; w=MAX; } } else { if(h>MAX){ w*=MAX/h; h=MAX; } }
+                    cvs.width=w; cvs.height=h; ctx.drawImage(img,0,0,w,h);
+                    currentEditingImage = cvs.toDataURL('image/jpeg', 0.7);
+                    if(type==='itinerary') { document.getElementById('editImagePreview').src=currentEditingImage; document.getElementById('editImagePreviewContainer').style.display='block'; }
+                    else { document.getElementById('memoImagePreview').src=currentEditingImage; document.getElementById('memoImagePreviewContainer').style.display='block'; }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        window.addEventListener('paste', function(e) {
+            const type = !document.getElementById('editModal').classList.contains('hidden') ? 'itinerary' : 
+                         (!document.getElementById('memoModal').classList.contains('hidden') ? 'memo' : null);
+            if(!type) return;
+            const items = (e.clipboardData||e.originalEvent.clipboardData).items;
+            for(let i=0; i<items.length; i++) {
+                if(items[i].type.indexOf('image')!==-1) {
+                    const blob = items[i].getAsFile();
+                    // Re-use logic manually since we have blob not input
+                    const r = new FileReader();
+                    r.onload = function(ev) {
+                        const img=new Image(); img.src=ev.target.result;
+                        img.onload=function(){
+                            const cvs=document.createElement('canvas'); const ctx=cvs.getContext('2d');
+                            const MAX=800; let w=img.width, h=img.height;
+                            if(w>h){ if(w>MAX){ h*=MAX/w; w=MAX; } } else { if(h>MAX){ w*=MAX/h; h=MAX; } }
+                            cvs.width=w; cvs.height=h; ctx.drawImage(img,0,0,w,h);
+                            currentEditingImage=cvs.toDataURL('image/jpeg',0.7);
+                            if(type==='itinerary'){document.getElementById('editImagePreview').src=currentEditingImage; document.getElementById('editImagePreviewContainer').style.display='block';}
+                            else{document.getElementById('memoImagePreview').src=currentEditingImage; document.getElementById('memoImagePreviewContainer').style.display='block';}
+                        }
+                    };
+                    r.readAsDataURL(blob);
+                }
+            }
+        });
+        function clearEditImage(type) {
+            currentEditingImage = null;
+            if(type==='itinerary') { document.getElementById('editImageInput').value=''; document.getElementById('editImagePreviewContainer').style.display='none'; }
+            else { document.getElementById('memoImageInput').value=''; document.getElementById('memoImagePreviewContainer').style.display='none'; }
+        }
+
+        // --- SPOTLIGHT ---
+        function openMemoSpotlight(id) {
+            const m = appData.memos.find(x=>x.id===id); if(!m) return;
+            document.getElementById('memoSpotlightText').innerText = m.text;
+            const img = document.getElementById('memoSpotlightImg');
+            if(m.image) { img.src=m.image; img.classList.remove('hidden'); } else { img.classList.add('hidden'); }
+            document.getElementById('memoSpotlight').classList.remove('hidden');
+        }
+        function closeMemoSpotlight() { document.getElementById('memoSpotlight').classList.add('hidden'); }
+        function openLightbox(src) { document.getElementById('lightboxImg').src=src; document.getElementById('lightbox').classList.remove('hidden'); }
+        function closeLightbox() { document.getElementById('lightbox').classList.add('hidden'); }
+
+        // --- WEATHER ---
+        async function fetchWeather() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&forecast_days=3`);
+                const data = await res.json();
+                let html = '<div style="margin-bottom:10px;font-weight:bold;border-bottom:1px solid rgba(255,255,255,0.3);padding-bottom:5px;">東京 3 日預報</div>';
+                for(let i=0; i<3; i++) {
+                    const c = data.daily.weathercode[i];
+                    let icon='fa-sun', desc='晴/多雲';
+                    if(c>3){icon='fa-cloud';desc='陰天';} if(c>50){icon='fa-umbrella';desc='有雨';}
+                    const d = new Date(); d.setDate(d.getDate()+i);
+                    html += `<div class="weather-day-row"><div style="flex:1;">${d.getMonth()+1}/${d.getDate()}</div><div style="flex:1;text-align:center;"><i class="fa-solid ${icon}"></i> ${desc}</div><div style="flex:1;text-align:right;"><span class="temp-high">${data.daily.temperature_2m_max[i]}°</span> <span class="temp-low">${data.daily.temperature_2m_min[i]}°</span></div></div>`;
+                }
+                document.getElementById('weatherDisplay').innerHTML = html;
+            } catch(e) { document.getElementById('weatherDisplay').innerHTML = '氣象載入失敗'; }
+        }
+    </script>
+</body>
+</html>
