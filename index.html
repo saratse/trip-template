@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅程規劃系統 V9.0</title>
+    <title>旅程規劃系統 V10.0</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -101,17 +101,28 @@
         }
         .smart-text:focus { outline: 2px solid var(--accent); background: #fff; border-radius: 4px; padding: 5px; }
 
-        /* Paste Button */
-        .btn-paste {
+        /* Action Buttons (Paste/Clear) */
+        .card-actions { display: flex; gap: 5px; }
+        .btn-action {
             font-size: 0.75rem; background: #e2e8f0; color: #475569;
-            border: 1px solid #cbd5e1; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+            border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer;
         }
-        .btn-paste:active { background: #cbd5e1; }
+        .btn-action:active { background: #cbd5e1; }
+        .btn-action.clear { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 
         /* Info Rows */
         .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.95rem; }
         .label { font-weight: bold; color: #666; }
         .value { text-align: right; font-weight: 600; color: #222; }
+
+        /* Link List */
+        .link-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 0; border-bottom: 1px dashed #ccc; 
+        }
+        .link-item:last-child { border-bottom: none; }
+        .link-item a { color: var(--primary); text-decoration: none; font-weight: bold; flex-grow: 1; }
+        .link-item a:hover { text-decoration: underline; }
 
         /* Buttons */
         .btn {
@@ -174,11 +185,7 @@
         .btn-copy { width: 44px; background: #475569; color: #fff; border: 1px solid #64748b; border-radius: 4px; cursor: pointer; }
 
         /* Memos - Fixed Layout */
-        .memo-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; /* Default single column mobile */
-            gap: 15px; 
-        }
+        .memo-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         .memo-card { background: #fffef0; border: 1px solid #d4af37; padding: 15px; border-radius: 2px; position: relative; }
         .memo-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 20px; background: rgba(212, 175, 55, 0.2); }
         .memo-text { margin-top: 15px; white-space: pre-wrap; font-size: 1rem; line-height: 1.5; word-break: break-all; }
@@ -186,31 +193,14 @@
         .memo-actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; }
 
         /* Checklist - Fixed Layout */
-        .checklist-item { 
-            display: flex; 
-            align-items: center; 
-            padding: 12px 5px; 
-            border-bottom: 1px dashed #ccc; 
-            cursor: pointer; 
-        }
+        .checklist-item { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px dashed #ccc; cursor: pointer; }
         .checklist-item:last-child { border-bottom: none; }
-        .checklist-item input[type="checkbox"] { 
-            margin: 0 12px 0 0; 
-            transform: scale(1.3); 
-            accent-color: var(--primary);
-            flex-shrink: 0;
-            width: auto; /* Override general input width */
-        }
-        .checklist-item span {
-            flex-grow: 1;
-            word-break: break-word;
-        }
+        .checklist-item input[type="checkbox"] { margin: 0 12px 0 0; transform: scale(1.3); accent-color: var(--primary); flex-shrink: 0; width: auto; }
+        .checklist-item span { flex-grow: 1; word-break: break-word; }
         .checklist-item.checked span { text-decoration: line-through; color: #999; }
-        .btn-check-delete {
-            background: none; border: none; color: #999; padding: 5px 10px; font-size: 1.2rem; cursor: pointer;
-        }
+        .btn-check-delete { background: none; border: none; color: #999; padding: 5px 10px; font-size: 1.2rem; cursor: pointer; }
 
-        /* Weather Widget - Updated for Rain */
+        /* Weather Widget */
         .weather-widget {
             background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
             color: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;
@@ -233,7 +223,7 @@
 
         .upload-area { border: 2px dashed #8b7355; padding: 15px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.5); margin-bottom: 10px; }
 
-        /* FAB - Fixed Z-Index and Position */
+        /* FAB */
         .fab {
             position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
             background: var(--accent); border-radius: 50%; display: flex; justify-content: center;
@@ -249,7 +239,7 @@
     <!-- LOCK SCREEN -->
     <div id="lockScreen">
         <h1 class="cinzel" style="font-size:2rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">Destiny Trip</h1>
-        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V9.0</div>
+        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V10.0</div>
         <input type="password" id="passwordInput" class="pass-input" placeholder="輸入旅程代碼" onkeypress="handleEnter(event)">
         <button class="btn-unlock" onclick="attemptLogin()">開啟卷軸</button>
         <div id="loginError" style="color:#ef4444; margin-top:15px; min-height:20px;"></div>
@@ -262,7 +252,7 @@
     <!-- MAIN APP -->
     <div id="appContainer" class="hidden">
         <header>
-            <div style="width:30px;"></div> <!-- Spacer -->
+            <div style="width:30px;"></div>
             <div style="text-align:center;">
                 <h1 class="cinzel" style="margin:0; font-size:1.3rem;"><i class="fa-solid fa-dragon"></i> <span id="headerTitle">旅程</span></h1>
                 <div id="headerDate" style="font-size:0.75rem; color:#aaa;"></div>
@@ -276,24 +266,23 @@
                 <div class="rpg-card">
                     <div class="card-title">
                         <span><i class="fa-solid fa-plane-departure"></i> 航班資訊</span>
-                        <button class="btn-paste" onclick="pasteTo('flightInfo')"><i class="fa-regular fa-clipboard"></i> 貼上</button>
+                        <div class="card-actions">
+                            <button class="btn-action" onclick="pasteSafe('flightInfo')"><i class="fa-regular fa-clipboard"></i> 貼上</button>
+                            <button class="btn-action clear" onclick="clearField('flightInfo')"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </div>
-                    <!-- Smart Textarea for User Input -->
-                    <textarea id="flightInfo" class="smart-text" rows="5" placeholder="請在此貼上航班資訊...
-例：
-去程 UO624 12/10 23:55
-回程 UO629 12/14 01:55" readonly onclick="enableEdit(this)" onblur="saveSectionText('flightInfo', this.value)"></textarea>
+                    <textarea id="flightInfo" class="smart-text" rows="5" placeholder="請在此貼上航班資訊..." readonly onclick="enableEdit(this)" onblur="saveSectionText('flightInfo', this.value)"></textarea>
                 </div>
 
                 <div class="rpg-card">
                     <div class="card-title">
                         <span><i class="fa-solid fa-bed"></i> 住宿據點</span>
-                        <button class="btn-paste" onclick="pasteTo('hotelInfo')"><i class="fa-regular fa-clipboard"></i> 貼上</button>
+                        <div class="card-actions">
+                            <button class="btn-action" onclick="pasteSafe('hotelInfo')"><i class="fa-regular fa-clipboard"></i> 貼上</button>
+                            <button class="btn-action clear" onclick="clearField('hotelInfo')"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </div>
-                    <textarea id="hotelInfo" class="smart-text" rows="5" placeholder="請在此輸入飯店資訊...
-例：
-Dormy Inn Ikebukuro
-地址：東京都豊島區..." readonly onclick="enableEdit(this)" onblur="saveSectionText('hotelInfo', this.value)"></textarea>
+                    <textarea id="hotelInfo" class="smart-text" rows="5" placeholder="請在此輸入飯店資訊..." readonly onclick="enableEdit(this)" onblur="saveSectionText('hotelInfo', this.value)"></textarea>
                     <div style="margin-top:10px; text-align:right;">
                         <a id="hotelMapLink" href="https://www.google.com/maps" target="_blank" class="btn btn-map btn-sm"><i class="fa-solid fa-map-location-dot"></i> 導航</a>
                     </div>
@@ -334,9 +323,22 @@ Dormy Inn Ikebukuro
                     <div class="card-title"><i class="fa-solid fa-cloud-sun-rain"></i> 天氣預報</div>
                     <div id="weatherDisplay" class="weather-widget"><i class="fa-solid fa-spinner fa-spin"></i> 讀取中...</div>
                 </div>
+                
+                <!-- USEFUL LINKS -->
+                <div class="rpg-card">
+                    <div class="card-title"><i class="fa-solid fa-link"></i> 常用連結</div>
+                    <div id="usefulLinksContainer"></div>
+                    <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
+                        <div style="display:flex; gap:5px; margin-bottom:5px;">
+                            <input type="text" id="newLinkName" placeholder="名稱" style="flex:1; margin-bottom:0;">
+                            <input type="text" id="newLinkUrl" placeholder="網址" style="flex:2; margin-bottom:0;">
+                        </div>
+                        <button class="btn btn-gold" style="width:100%;" onclick="addUsefulLink()">新增連結</button>
+                    </div>
+                </div>
+
                 <div class="rpg-card">
                     <div class="card-title"><i class="fa-solid fa-kit-medical"></i> 緊急聯絡</div>
-                    <!-- Restored V7 Layout Structure -->
                     <div class="info-row">
                         <span class="label">警察 (Police)</span>
                         <a href="tel:110" class="btn btn-danger btn-sm">110</a>
@@ -353,7 +355,7 @@ Dormy Inn Ikebukuro
             </section>
         </div>
 
-        <!-- FAB (Fixed Visibility) -->
+        <!-- FAB -->
         <div id="fabAdd" class="fab hidden" onclick="handleFabClick()"><i class="fa-solid fa-plus"></i></div>
 
         <!-- NAV -->
@@ -457,8 +459,14 @@ Dormy Inn Ikebukuro
 
     <script>
         // --- DATA DEFAULTS ---
-        const DATA_VERSION = 9.0; 
+        const DATA_VERSION = 10.0; 
         
+        const DEFAULT_LINKS = [
+            { name: 'Yahoo! JAPAN', url: 'https://www.yahoo.co.jp/' },
+            { name: 'Amazon JP', url: 'https://www.amazon.co.jp/' },
+            { name: '乘換案內', url: 'https://world.jorudan.co.jp/mln/zh-tw/' }
+        ];
+
         const PRESET_TOKYO = {
             title: '東京快閃 2025', startDate: '2025-12-11',
             flightInfo: "去程 UO624 12/10 23:55\n回程 UO629 12/14 01:55",
@@ -467,12 +475,14 @@ Dormy Inn Ikebukuro
                 { id: 1, date: '2025-12-11', time: '04:45', title: '抵達羽田 T3', desc: '入境 / SIM卡 / 寄行李', type: 'transport', link: '' },
                 { id: 2, date: '2025-12-12', time: '10:00', title: 'Gallery AaMo', desc: '展覽二刷', type: 'activity', link: '' }
             ],
-            checklist: [{text:'護照',checked:false}], memos: [], personalInfo: {}
+            checklist: [{text:'護照',checked:false}], memos: [], personalInfo: {},
+            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS))
         };
 
         const BLANK_TEMPLATE = {
             title: '新旅程', startDate: new Date().toISOString().split('T')[0],
-            flightInfo: '', hotelInfo: '', itinerary: [], checklist: [], memos: [], personalInfo: {}
+            flightInfo: '', hotelInfo: '', itinerary: [], checklist: [], memos: [], personalInfo: {},
+            usefulLinks: JSON.parse(JSON.stringify(DEFAULT_LINKS))
         };
 
         // --- STATE ---
@@ -488,11 +498,13 @@ Dormy Inn Ikebukuro
             const key = document.getElementById('passwordInput').value.trim();
             if (!key) return document.getElementById('loginError').innerText = "請輸入代碼";
 
-            const storageKey = 'trip_v9_' + key;
+            const storageKey = 'trip_v9_' + key; // Keeping key compatible with V9 storage
             const saved = localStorage.getItem(storageKey);
 
             if (saved) {
                 appData = JSON.parse(saved);
+                // Migration to V10 structure if needed
+                if(!appData.usefulLinks) appData.usefulLinks = JSON.parse(JSON.stringify(DEFAULT_LINKS));
             } else {
                 if (key === '20251210') appData = JSON.parse(JSON.stringify(PRESET_TOKYO));
                 else if (key === 'demo') appData = JSON.parse(JSON.stringify(PRESET_TOKYO)); 
@@ -520,6 +532,7 @@ Dormy Inn Ikebukuro
             renderPersonalInfo();
             renderChecklist();
             renderMemos();
+            renderUsefulLinks();
             fetchWeather();
             renderItinerary();
 
@@ -541,12 +554,15 @@ Dormy Inn Ikebukuro
             localStorage.setItem('trip_v9_' + currentSessionKey, JSON.stringify(appData));
         }
 
-        // --- PASTE FUNCTIONALITY ---
-        async function pasteTo(elementId) {
+        // --- PASTE & CLEAR FUNCTIONALITY (Safe) ---
+        async function pasteSafe(elementId) {
+            const el = document.getElementById(elementId);
+            if(el.value.trim() !== '') {
+                return alert('欄位內已有文字，請先清空再執行貼上，以免資料遺失。');
+            }
             try {
                 const text = await navigator.clipboard.readText();
                 if(text) {
-                    const el = document.getElementById(elementId);
                     enableEdit(el); 
                     el.value = text;
                     saveSectionText(elementId, text); 
@@ -556,11 +572,20 @@ Dormy Inn Ikebukuro
             }
         }
 
-        // Safe Paste for Itinerary Desc
+        function clearField(elementId) {
+            const el = document.getElementById(elementId);
+            if(el.value.trim() === '') return;
+            if(confirm('確定要清空此欄位嗎？')) {
+                enableEdit(el);
+                el.value = '';
+                saveSectionText(elementId, '');
+            }
+        }
+
         async function pasteToDesc(elementId) {
             const el = document.getElementById(elementId);
             if(el.value.trim() !== '') {
-                return alert('為了防止資料遺失，請先清空備註欄再使用貼上功能。');
+                return alert('備註欄已有文字，請先清空再貼上。');
             }
             try {
                 const text = await navigator.clipboard.readText();
@@ -607,6 +632,40 @@ Dormy Inn Ikebukuro
             el.setAttribute('readonly', true);
             el.style.background = 'transparent';
             el.style.border = 'none';
+        }
+
+        // --- USEFUL LINKS ---
+        function renderUsefulLinks() {
+            const c = document.getElementById('usefulLinksContainer'); c.innerHTML = '';
+            if(!appData.usefulLinks) appData.usefulLinks = [];
+            
+            appData.usefulLinks.forEach((link, idx) => {
+                c.innerHTML += `
+                <div class="link-item">
+                    <a href="${link.url}" target="_blank">${link.name}</a>
+                    <button class="btn-check-delete" onclick="deleteUsefulLink(${idx})"><i class="fa-solid fa-trash-can"></i></button>
+                </div>`;
+            });
+        }
+        function addUsefulLink() {
+            const name = document.getElementById('newLinkName').value.trim();
+            let url = document.getElementById('newLinkUrl').value.trim();
+            if(!name || !url) return alert("請輸入名稱與網址");
+            
+            if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            
+            appData.usefulLinks.push({name, url});
+            document.getElementById('newLinkName').value = '';
+            document.getElementById('newLinkUrl').value = '';
+            saveData();
+            renderUsefulLinks();
+        }
+        function deleteUsefulLink(idx) {
+            if(confirm("刪除此連結？")) {
+                appData.usefulLinks.splice(idx, 1);
+                saveData();
+                renderUsefulLinks();
+            }
         }
 
         // --- ITINERARY LOGIC ---
@@ -718,7 +777,6 @@ Dormy Inn Ikebukuro
             if(!date || !title) return alert('請填寫日期與標題');
 
             let link = document.getElementById('editLink').value.trim();
-            // Auto-prefix link
             if(link && !/^https?:\/\//i.test(link)) {
                 link = 'https://' + link;
             }
