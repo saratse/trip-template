@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>旅程規劃系統 V8.1</title>
+    <title>旅程規劃系統 V9.0</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -108,7 +108,7 @@
         }
         .btn-paste:active { background: #cbd5e1; }
 
-        /* Info Rows (Restored V7 Style) */
+        /* Info Rows */
         .info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.95rem; }
         .label { font-weight: bold; color: #666; }
         .value { text-align: right; font-weight: 600; color: #222; }
@@ -130,7 +130,7 @@
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: linear-gradient(0deg, #0f172a 0%, #1e293b 100%);
             display: flex; justify-content: space-around; padding: 10px 0;
-            border-top: 2px solid var(--accent); z-index: 2000; /* Increased Z-Index */
+            border-top: 2px solid var(--accent); z-index: 2000;
         }
         .nav-item { color: #64748b; background: none; border: none; flex: 1; text-align: center; font-size: 0.75rem; cursor: pointer; }
         .nav-item.active { color: var(--accent); text-shadow: 0 0 5px rgba(212, 175, 55, 0.5); }
@@ -167,21 +167,50 @@
             background: var(--paper); padding: 20px; border-radius: 8px; width: 90%; max-width: 500px;
             border: 2px solid var(--accent); max-height: 95vh; overflow-y: auto; display: flex; flex-direction: column;
         }
-        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #8b7355; background: #fffef0; border-radius: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #8b7355; background: #fffef0; border-radius: 4px; font-family: 'Noto Serif TC', serif;}
         
         /* Personal Info */
         .input-group { display: flex; gap: 5px; margin-bottom: 10px; }
         .btn-copy { width: 44px; background: #475569; color: #fff; border: 1px solid #64748b; border-radius: 4px; cursor: pointer; }
 
-        /* Memos */
-        .memo-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        /* Memos - Fixed Layout */
+        .memo-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; /* Default single column mobile */
+            gap: 15px; 
+        }
         .memo-card { background: #fffef0; border: 1px solid #d4af37; padding: 15px; border-radius: 2px; position: relative; }
         .memo-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 20px; background: rgba(212, 175, 55, 0.2); }
         .memo-text { margin-top: 15px; white-space: pre-wrap; font-size: 1rem; line-height: 1.5; word-break: break-all; }
         .memo-img { width: 100%; margin-top: 10px; border-radius: 4px; cursor: pointer; }
         .memo-actions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px; }
 
-        /* Weather Widget (Restored V7) */
+        /* Checklist - Fixed Layout */
+        .checklist-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 5px; 
+            border-bottom: 1px dashed #ccc; 
+            cursor: pointer; 
+        }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-item input[type="checkbox"] { 
+            margin: 0 12px 0 0; 
+            transform: scale(1.3); 
+            accent-color: var(--primary);
+            flex-shrink: 0;
+            width: auto; /* Override general input width */
+        }
+        .checklist-item span {
+            flex-grow: 1;
+            word-break: break-word;
+        }
+        .checklist-item.checked span { text-decoration: line-through; color: #999; }
+        .btn-check-delete {
+            background: none; border: none; color: #999; padding: 5px 10px; font-size: 1.2rem; cursor: pointer;
+        }
+
+        /* Weather Widget - Updated for Rain */
         .weather-widget {
             background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
             color: white; border-radius: 8px; padding: 15px; margin-bottom: 15px;
@@ -194,6 +223,7 @@
         .weather-day-row:last-child { border-bottom: none; }
         .temp-high { color: #fee2e2; font-weight: bold; }
         .temp-low { color: #e0f2fe; opacity: 0.9; }
+        .weather-rain { font-size: 0.75rem; opacity: 0.9; margin-left: 5px; color: #bae6fd; }
 
         /* Lightbox & Spotlight */
         .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 4000; display: flex; justify-content: center; align-items: center; }
@@ -208,7 +238,7 @@
             position: fixed; bottom: 100px; right: 20px; width: 56px; height: 56px;
             background: var(--accent); border-radius: 50%; display: flex; justify-content: center;
             align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); color: #451a03;
-            font-size: 24px; border: 2px solid #fff; cursor: pointer; z-index: 2100; /* Higher than Nav */
+            font-size: 24px; border: 2px solid #fff; cursor: pointer; z-index: 2100;
             transition: transform 0.2s;
         }
         .fab:active { transform: scale(0.95); }
@@ -219,7 +249,7 @@
     <!-- LOCK SCREEN -->
     <div id="lockScreen">
         <h1 class="cinzel" style="font-size:2rem; margin-bottom:10px; text-shadow:0 0 10px var(--accent);">Destiny Trip</h1>
-        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V8.1</div>
+        <div style="margin-bottom:30px; color:#aaa; font-size:0.9rem;">通用版 V9.0</div>
         <input type="password" id="passwordInput" class="pass-input" placeholder="輸入旅程代碼" onkeypress="handleEnter(event)">
         <button class="btn-unlock" onclick="attemptLogin()">開啟卷軸</button>
         <div id="loginError" style="color:#ef4444; margin-top:15px; min-height:20px;"></div>
@@ -347,6 +377,11 @@ Dormy Inn Ikebukuro
                 <button class="btn btn-danger" style="flex:1;" onclick="closeModal('settingsModal')">取消</button>
                 <button class="btn btn-gold" style="flex:1;" onclick="saveSettings()">儲存設定</button>
             </div>
+            
+            <hr style="border:0; border-top:1px solid #ccc; margin:20px 0; width:100%;">
+            <div style="text-align:center;">
+                <button class="btn btn-danger" style="width:100%; opacity:0.8;" onclick="deleteCurrentTrip()"><i class="fa-solid fa-triangle-exclamation"></i> 刪除此行程</button>
+            </div>
         </div>
     </div>
 
@@ -365,8 +400,11 @@ Dormy Inn Ikebukuro
             <label style="font-weight:bold; color:#666;">標題</label>
             <input type="text" id="editTitle">
             
-            <label style="font-weight:bold; color:#666;">備註 (自動換行)</label>
-            <textarea id="editDesc" rows="5"></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="font-weight:bold; color:#666;">備註 (自動換行)</label>
+                <button class="btn-paste" onclick="pasteToDesc('editDesc')"><i class="fa-regular fa-clipboard"></i> 貼上</button>
+            </div>
+            <textarea id="editDesc" rows="5" placeholder="內容..."></textarea>
             
             <label style="font-weight:bold; color:#666;">圖片</label>
             <div class="upload-area" onclick="document.getElementById('editImageInput').click()" id="uploadDropZone">
@@ -419,7 +457,7 @@ Dormy Inn Ikebukuro
 
     <script>
         // --- DATA DEFAULTS ---
-        const DATA_VERSION = 8.1; 
+        const DATA_VERSION = 9.0; 
         
         const PRESET_TOKYO = {
             title: '東京快閃 2025', startDate: '2025-12-11',
@@ -450,7 +488,7 @@ Dormy Inn Ikebukuro
             const key = document.getElementById('passwordInput').value.trim();
             if (!key) return document.getElementById('loginError').innerText = "請輸入代碼";
 
-            const storageKey = 'trip_v8_' + key;
+            const storageKey = 'trip_v9_' + key;
             const saved = localStorage.getItem(storageKey);
 
             if (saved) {
@@ -500,7 +538,7 @@ Dormy Inn Ikebukuro
 
         function saveData() {
             if(!currentSessionKey) return;
-            localStorage.setItem('trip_v8_' + currentSessionKey, JSON.stringify(appData));
+            localStorage.setItem('trip_v9_' + currentSessionKey, JSON.stringify(appData));
         }
 
         // --- PASTE FUNCTIONALITY ---
@@ -509,12 +547,26 @@ Dormy Inn Ikebukuro
                 const text = await navigator.clipboard.readText();
                 if(text) {
                     const el = document.getElementById(elementId);
-                    enableEdit(el); // Make sure it's editable
+                    enableEdit(el); 
                     el.value = text;
-                    saveSectionText(elementId, text); // Auto save
+                    saveSectionText(elementId, text); 
                 }
             } catch (err) {
                 alert('無法讀取剪貼簿，請手動貼上');
+            }
+        }
+
+        // Safe Paste for Itinerary Desc
+        async function pasteToDesc(elementId) {
+            const el = document.getElementById(elementId);
+            if(el.value.trim() !== '') {
+                return alert('為了防止資料遺失，請先清空備註欄再使用貼上功能。');
+            }
+            try {
+                const text = await navigator.clipboard.readText();
+                if(text) el.value = text;
+            } catch(err) {
+                alert('無法讀取剪貼簿');
             }
         }
 
@@ -531,6 +583,15 @@ Dormy Inn Ikebukuro
             updateHeaderUI();
             renderItinerary(); 
             closeModal('settingsModal');
+        }
+        function deleteCurrentTrip() {
+            if(confirm("警告：確定要永久刪除此行程嗎？")) {
+                if(confirm("此動作無法復原。確定刪除？")) {
+                    localStorage.removeItem('trip_v9_' + currentSessionKey);
+                    alert("行程已刪除。");
+                    location.reload();
+                }
+            }
         }
 
         // --- SMART TEXTAREA ---
@@ -656,6 +717,12 @@ Dormy Inn Ikebukuro
             const title = document.getElementById('editTitle').value;
             if(!date || !title) return alert('請填寫日期與標題');
 
+            let link = document.getElementById('editLink').value.trim();
+            // Auto-prefix link
+            if(link && !/^https?:\/\//i.test(link)) {
+                link = 'https://' + link;
+            }
+
             const newItem = {
                 id: editItineraryId || Date.now(),
                 date: date,
@@ -663,7 +730,7 @@ Dormy Inn Ikebukuro
                 title: title,
                 desc: document.getElementById('editDesc').value,
                 type: document.getElementById('editType').value,
-                link: document.getElementById('editLink').value,
+                link: link,
                 image: currentEditingImage
             };
 
@@ -762,7 +829,7 @@ Dormy Inn Ikebukuro
             appData.checklist.forEach((item, idx) => {
                 c.innerHTML += `<div class="checklist-item ${item.checked?'checked':''}" onclick="toggleCheck(${idx})">
                     <input type="checkbox" ${item.checked?'checked':''}><span>${item.text}</span>
-                    <button style="margin-left:auto;background:none;border:none;color:#666;" onclick="deleteCheck(${idx},event)">x</button>
+                    <button class="btn-check-delete" onclick="deleteCheck(${idx},event)">×</button>
                 </div>`;
             });
         }
@@ -866,7 +933,18 @@ Dormy Inn Ikebukuro
                     let icon='fa-sun', desc='晴/多雲';
                     if(c>3){icon='fa-cloud';desc='陰天';} if(c>50){icon='fa-umbrella';desc='有雨';}
                     const d = new Date(); d.setDate(d.getDate()+i);
-                    html += `<div class="weather-day-row"><div style="flex:1;">${d.getMonth()+1}/${d.getDate()}</div><div style="flex:1;text-align:center;"><i class="fa-solid ${icon}"></i> ${desc}</div><div style="flex:1;text-align:right;"><span class="temp-high">${data.daily.temperature_2m_max[i]}°</span> <span class="temp-low">${data.daily.temperature_2m_min[i]}°</span></div></div>`;
+                    // Add Rain Prop
+                    const rain = data.daily.precipitation_probability_max[i];
+                    
+                    html += `<div class="weather-day-row">
+                        <div style="flex:1;">${d.getMonth()+1}/${d.getDate()}</div>
+                        <div style="flex:1;text-align:center;"><i class="fa-solid ${icon}"></i> ${desc}</div>
+                        <div style="flex:1;text-align:right;">
+                            <span class="temp-high">${data.daily.temperature_2m_max[i]}°</span> 
+                            <span class="temp-low">${data.daily.temperature_2m_min[i]}°</span>
+                            <span class="weather-rain">💧${rain}%</span>
+                        </div>
+                    </div>`;
                 }
                 document.getElementById('weatherDisplay').innerHTML = html;
             } catch(e) { document.getElementById('weatherDisplay').innerHTML = '氣象載入失敗'; }
